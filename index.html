@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>社畜辦公室 CAM 01</title>
+</head>
+<body>
+<script type="application/json" id="state">null</script>
+<script id="app-js">
+(function(){
+"use strict";
+var CSS = [
+"*{box-sizing:border-box;margin:0;padding:0}",
+"html,body{background:#1d1b19;color:#2b2622;font-family:-apple-system,'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;-webkit-tap-highlight-color:transparent}",
+".wrap{max-width:1100px;margin:0 auto;padding:10px 10px 40px}",
+".cam{position:relative;width:100%;aspect-ratio:1000/700;border-radius:8px;overflow:hidden;container-type:inline-size;background:#f3ead8;box-shadow:0 6px 30px rgba(0,0,0,.4)}",
+".cam svg{position:absolute;inset:0;width:100%;height:100%;display:block}",
+".hud{position:absolute;inset:0;pointer-events:none;font-family:ui-monospace,Menlo,Consolas,monospace}",
+".tag{position:absolute;background:#1f1f1f;color:#fff;font-weight:700;letter-spacing:.08em;font-size:clamp(8px,1.5cqw,15px);padding:.3em .6em;border-radius:2px}",
+".rec{color:#ff5a4e}.rec i{display:inline-block;width:.6em;height:.6em;border-radius:50%;background:#ff3b30;margin-right:.35em;animation:blink 1.2s steps(2) infinite}",
+"@keyframes blink{50%{opacity:0}}",
+".clock{background:#b3241b}",
+".live{font-size:clamp(7px,1.25cqw,13px);font-weight:600}",
+".corner{position:absolute;width:4%;height:5.5%;border:2px solid rgba(40,40,40,.55)}",
+".scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.025) 0 1px,transparent 1px 3px);pointer-events:none}",
+".bub{position:absolute;transform:translate(-50%,-100%);background:#fff;border:2px solid #2b2b2b;border-radius:1.2em;padding:.45em .8em .5em;font-size:clamp(8px,1.85cqw,18px);font-weight:700;line-height:1.35;max-width:34cqw;min-width:9em;box-shadow:0 3px 0 rgba(0,0,0,.15);pointer-events:none;opacity:0;transition:opacity .25s;white-space:normal}",
+".bub.on{opacity:1}",
+".bub b{display:inline-block;background:#2b2b2b;color:#fff;font-size:.72em;padding:.1em .6em;border-radius:1em;margin-bottom:.2em}",
+".bub:after{content:'';position:absolute;left:50%;bottom:-.55em;width:.9em;height:.9em;background:#fff;border-right:2px solid #2b2b2b;border-bottom:2px solid #2b2b2b;transform:translateX(-50%) rotate(45deg)}",
+".bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 8px;color:#f4ecdf}",
+".pill{background:#2d2a26;border:1px solid #47413a;border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}",
+".pill.gold{color:#ffd166}",
+".btn{appearance:none;border:0;border-radius:10px;padding:9px 14px;font-weight:700;font-size:14px;cursor:pointer;background:#f4ecdf;color:#2b2622}",
+".btn.dark{background:#3a352f;color:#f4ecdf}",
+".btn.ai{background:linear-gradient(135deg,#ffb36b,#ff7a59);color:#fff}",
+".btn:disabled{opacity:.45}",
+".btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}",
+".panel{background:#f4ecdf;border-radius:14px;padding:14px;margin-top:12px}",
+".panel h3{font-size:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}",
+".add{display:flex;gap:8px}",
+".add input{flex:1;min-width:0;border:2px solid #2b2622;border-radius:10px;padding:9px 12px;font-size:16px;background:#fff}",
+".chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}",
+".chip{border:2px solid #2b2622;background:#fff;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}",
+".chip.on{background:#2b2622;color:#fff}",
+".tabs{display:flex;gap:6px;margin:4px 0 10px}",
+".tabs button{flex:1;border:0;border-radius:10px;padding:9px 4px;font-weight:800;font-size:14px;background:#e4d8c4;color:#5a5047;cursor:pointer}",
+".tabs button.on{background:#2b2622;color:#fff}",
+".task{background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:6px solid #ccc;box-shadow:0 1px 0 rgba(0,0,0,.08)}",
+".task .t{font-weight:700;font-size:15px;word-break:break-word}",
+".task .m{font-size:12px;color:#7a6f64;margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+".task .a{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}",
+".pick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}",
+".pick button{display:flex;align-items:center;gap:4px;border:2px solid #2b2622;background:#fff;border-radius:999px;padding:3px 10px 3px 3px;font-size:13px;font-weight:700;cursor:pointer}",
+".pick button.best{background:#fff3c4}",
+".av{width:26px;height:26px;border-radius:50%;background:#efe5d3;display:inline-block;overflow:hidden;flex:none}",
+".av svg{width:100%;height:100%}",
+".empty{color:#9a8f83;font-size:14px;text-align:center;padding:14px}",
+".staff{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}",
+".card{background:#fff;border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center}",
+".card .av{width:44px;height:44px}",
+".card .n{font-weight:800;font-size:14px}.card .r{font-size:11px;color:#7a6f64}",
+".meter{height:6px;background:#eee3d2;border-radius:3px;margin-top:4px;overflow:hidden}.meter i{display:block;height:100%}",
+".shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}",
+".item{background:#fff;border-radius:12px;padding:10px;font-size:13px}",
+".item .n{font-weight:800;font-size:14px}.item p{color:#7a6f64;margin:3px 0 8px;font-size:12px}",
+".note{color:#a99c8d;font-size:12px;margin-top:8px}",
+".toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2622;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9}",
+".toast.on{opacity:1}",
+"@media(max-width:520px){.panel{padding:12px}.bub{max-width:44cqw}}"
+].join("\n");
+
+/* ---------- state ---------- */
+var CATS = {
+  write:{n:"寫作",e:"✍️",c:"#7aa7e0"},
+  design:{n:"設計",e:"🎨",c:"#e79bc0"},
+  tech:{n:"技術",e:"💻",c:"#6cc4a1"},
+  plan:{n:"企劃",e:"📋",c:"#f2b84b"},
+  misc:{n:"雜事",e:"📦",c:"#b9a58f"}
+};
+var ROSTER = {
+  wolf:{name:"阿狼",animal:"wolf",role:"寫手",skills:["write"],shirt:"#5b6b82"},
+  crow:{name:"小鴉",animal:"crow",role:"工程師",skills:["tech"],shirt:"#3f4a5a"},
+  cow:{name:"牛牛",animal:"cow",role:"技能管理師",skills:["plan"],shirt:"#6aa0d8"},
+  sheep:{name:"綿綿",animal:"sheep",role:"設計師",skills:["design"],shirt:"#e58fb0"},
+  tiger:{name:"虎哥",animal:"tiger",role:"專案經理",skills:["plan","misc"],shirt:"#2e3f6b"},
+  penguin:{name:"企企",animal:"penguin",role:"實習生",skills:["misc","write"],shirt:"#f2c14e"}
+};
+var SHOP = [
+  {id:"plant",n:"🪴 盆栽",p:120,d:"心情恢復 +3/小時"},
+  {id:"sofa",n:"🛋️ 沙發",p:250,d:"沒體力的員工去沙發睡，體力恢復 +5/小時"},
+  {id:"coffee",n:"☕ 咖啡機",p:300,d:"體力恢復 +8/小時"},
+  {id:"vending",n:"🥤 販賣機",p:400,d:"心情恢復 +3/小時，多一個摸魚點"},
+  {id:"hire",n:"🐧 實習生企企",p:600,d:"招募第 6 位員工（雜事、寫作）"}
+];
+function now(){return Date.now();}
+function uid(){return Math.random().toString(36).slice(2,9);}
+function seed(){
+  var t=now(); var st=[];
+  ["wolf","crow","cow","sheep","tiger"].forEach(function(id,i){st.push({id:id,desk:i,energy:85-i*4,mood:70+i*3,at:t});});
+  return {v:1,coins:200,totalDone:0,savedAt:t,upgrades:{},staff:st,
+    tasks:[
+      {id:uid(),title:"口播影片製作",cat:"design",status:"todo",assignee:null,c:t},
+      {id:uid(),title:"IG 留言檢查",cat:"misc",status:"todo",assignee:null,c:t},
+      {id:uid(),title:"Threads 貼文",cat:"write",status:"doing",assignee:"wolf",c:t},
+      {id:uid(),title:"資安電子報",cat:"write",status:"done",assignee:"wolf",c:t,d:t,r:150}
+    ],
+    news:["【開張】社畜辦公室正式營運，老闆就是你","【提醒】把真實待辦丟進看板，派給員工吧"]};
+}
+var S;
+try{ S = JSON.parse(document.getElementById("state").textContent); }catch(e){ S=null; }
+var SEEDED=false;
+if(!S||!S.staff){ S = seed(); SEEDED=true; }
+
+var RATE = function(){ var u=S.upgrades||{}; return {e:8+(u.coffee?8:0), m:5+(u.plant?3:0)+(u.vending?3:0)}; };
+function eff(s){
+  var h=(now()-s.at)/3600000, r=RATE();
+  var e=s.energy+h*(r.e+(S.upgrades.sofa&&s.energy<20?5:0));
+  return {energy:Math.max(0,Math.min(100,e)), mood:Math.max(0,Math.min(100,s.mood+h*r.m))};
+}
+function normalize(){ S.staff.forEach(function(s){var f=eff(s);s.energy=f.energy;s.mood=f.mood;s.at=now();}); }
+function staffById(id){ for(var i=0;i<S.staff.length;i++) if(S.staff[i].id===id) return S.staff[i]; return null; }
+function doingOf(id){ return S.tasks.filter(function(t){return t.status==="doing"&&t.assignee===id;}); }
+function guessCat(title){
+  var t=title.toLowerCase();
+  if(/影片|剪|設計|圖|海報|logo|封面|ui|版面|視覺/.test(t)) return "design";
+  if(/code|repo|bug|程式|api|部署|網站|資料庫|修|git|腳本|自動化/.test(t)) return "tech";
+  if(/寫|文|貼文|稿|文案|threads|blog|電子報|信|email|翻譯/.test(t)) return "write";
+  if(/企劃|提案|會議|規劃|簡報|策略|計畫|報告|預算/.test(t)) return "plan";
+  return "misc";
+}
+function bestFor(cat){
+  var best=null,score=-1e9;
+  S.staff.forEach(function(s){ var f=eff(s); var sc=(ROSTER[s.id].skills.indexOf(cat)>=0?60:0)+f.energy*0.5+f.mood*0.2-doingOf(s.id).length*25; if(sc>score){score=sc;best=s;} });
+  return best;
+}
+
+/* ---------- persistence ---------- */
+var art=null, saveTimer=null, mode="local";
+function buildHTML(){
+  var json=JSON.stringify(S).replace(/</g,"\\u003c");
+  var app=document.getElementById("app-js").textContent;
+  return "<!DOCTYPE html>\n<html lang=\"zh-Hant\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>社畜辦公室 CAM 01</title>\n</head>\n<body>\n<script type=\"application/json\" id=\"state\">"+json+"<\/script>\n<script id=\"app-js\">"+app+"<\/script>\n</body>\n</html>";
+}
+function save(){
+  S.savedAt=now();
+  try{ localStorage.setItem("office-boss-v1",JSON.stringify(S)); }catch(e){}
+  if(!art) return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){
+    toast("儲存中…");
+    art.publish(buildHTML()).catch(function(err){
+      var c=err&&err.code;
+      if(c==="not_granted"||c==="not_writer"){ art=null; toast("唯讀模式：變更不會儲存"); }
+      else if(c!=="conflict"){ toast("儲存失敗，稍後再試"); }
+    });
+  },1500);
+}
+function mutate(fn){ normalize(); fn(); render(); save(); }
+
+/* ---------- character art ---------- */
+var OL="#3b3633";
+function head(a){
+  var s="";
+  if(a==="wolf"){
+    s+='<path d="M-20,-76 L-14,-98 L-4,-80Z M20,-76 L14,-98 L4,-80Z" fill="#8e9aa8" stroke="'+OL+'" stroke-width="2" stroke-linejoin="round"/>';
+    s+='<path d="M-16,-80 L-13,-92 L-8,-81Z M16,-80 L13,-92 L8,-81Z" fill="#e9b6b6"/>';
+    s+='<circle cx="0" cy="-64" r="22" fill="#8e9aa8" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<ellipse cx="0" cy="-56" rx="12" ry="9" fill="#e6e8ec" stroke="'+OL+'" stroke-width="1.5"/>';
+    s+='<ellipse cx="0" cy="-60" rx="4" ry="3" fill="#2b2b2b"/>';
+  } else if(a==="crow"){
+    s+='<path d="M-6,-86 Q0,-98 6,-86" fill="#2b2b33" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<circle cx="0" cy="-64" r="22" fill="#2f3038" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<path d="M-7,-58 L0,-46 L7,-58Z" fill="#f2b43a" stroke="'+OL+'" stroke-width="1.5" stroke-linejoin="round"/>';
+  } else if(a==="cow"){
+    s+='<path d="M-16,-82 Q-24,-96 -14,-98 M16,-82 Q24,-96 14,-98" fill="none" stroke="#d9b37a" stroke-width="5" stroke-linecap="round"/>';
+    s+='<ellipse cx="-24" cy="-70" rx="9" ry="5" fill="#fff" stroke="'+OL+'" stroke-width="2" transform="rotate(-20 -24 -70)"/>';
+    s+='<ellipse cx="24" cy="-70" rx="9" ry="5" fill="#fff" stroke="'+OL+'" stroke-width="2" transform="rotate(20 24 -70)"/>';
+    s+='<circle cx="0" cy="-64" r="22" fill="#fff" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<path d="M-20,-74 Q-12,-84 -4,-78 Q-8,-68 -18,-66Z" fill="#2b2b2b"/>';
+    s+='<ellipse cx="0" cy="-52" rx="13" ry="8" fill="#f4b6b6" stroke="'+OL+'" stroke-width="1.5"/>';
+    s+='<circle cx="-4" cy="-52" r="1.6" fill="#7a4b4b"/><circle cx="4" cy="-52" r="1.6" fill="#7a4b4b"/>';
+  } else if(a==="sheep"){
+    var w="";[[-18,-80],[-6,-88],[8,-88],[19,-80],[-22,-66],[22,-66],[-18,-52],[18,-52]].forEach(function(p){w+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="10" fill="#f6f1e6" stroke="'+OL+'" stroke-width="2"/>';});
+    s+=w+'<circle cx="0" cy="-70" r="16" fill="#f6f1e6"/>';
+    s+='<ellipse cx="0" cy="-62" rx="14" ry="17" fill="#5d5a57" stroke="'+OL+'" stroke-width="2"/>';
+  } else if(a==="tiger"){
+    s+='<circle cx="-17" cy="-82" r="7" fill="#f2a03d" stroke="'+OL+'" stroke-width="2"/><circle cx="17" cy="-82" r="7" fill="#f2a03d" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<circle cx="0" cy="-64" r="22" fill="#f2a03d" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<path d="M-4,-86 L0,-78 L4,-86 M-21,-66 L-13,-64 M21,-66 L13,-64 M-20,-58 L-13,-58 M20,-58 L13,-58" stroke="#3b2a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+    s+='<ellipse cx="0" cy="-54" rx="11" ry="8" fill="#fff4e4" stroke="'+OL+'" stroke-width="1.5"/>';
+    s+='<ellipse cx="0" cy="-58" rx="3.5" ry="2.5" fill="#d0646a"/>';
+  } else if(a==="penguin"){
+    s+='<circle cx="0" cy="-64" r="22" fill="#2f3038" stroke="'+OL+'" stroke-width="2"/>';
+    s+='<path d="M-15,-58 Q-16,-78 0,-76 Q16,-78 15,-58 Q8,-46 0,-46 Q-8,-46 -15,-58Z" fill="#fff"/>';
+    s+='<path d="M-6,-58 L0,-51 L6,-58Z" fill="#f29a3a" stroke="'+OL+'" stroke-width="1.5" stroke-linejoin="round"/>';
+  }
+  return s;
+}
+function eyes(a,sleep){
+  var y=(a==="cow"||a==="tiger")?-66:-67;
+  var c=(a==="crow"||a==="sheep")?"#fff":"#2b2b2b";
+  if(sleep) return '<path d="M-11,'+y+' q4,3 8,0 M3,'+y+' q4,3 8,0" stroke="'+(a==="crow"||a==="sheep"||a==="penguin"?"#fff":"#2b2b2b")+'" stroke-width="2" fill="none" stroke-linecap="round"/>';
+  if(a==="crow"||a==="penguin"){
+    return '<circle cx="-8" cy="'+y+'" r="5" fill="#fff"/><circle cx="8" cy="'+y+'" r="5" fill="#fff"/><circle cx="-7" cy="'+y+'" r="2.6" fill="#1b1b1b"/><circle cx="9" cy="'+y+'" r="2.6" fill="#1b1b1b"/>';
+  }
+  return '<circle cx="-8" cy="'+y+'" r="3" fill="'+c+'"/><circle cx="8" cy="'+y+'" r="3" fill="'+c+'"/><circle cx="-7" cy="'+(y-1)+'" r="1" fill="#fff" opacity="'+(c==="#fff"?0:1)+'"/><circle cx="9" cy="'+(y-1)+'" r="1" fill="#fff" opacity="'+(c==="#fff"?0:1)+'"/>'+
+    '<ellipse cx="-14" cy="'+(y+7)+'" rx="3.5" ry="2" fill="#f19aa0" opacity=".6"/><ellipse cx="14" cy="'+(y+7)+'" rx="3.5" ry="2" fill="#f19aa0" opacity=".6"/>';
+}
+function bodySVG(id){
+  var r=ROSTER[id], skin={wolf:"#8e9aa8",crow:"#2f3038",cow:"#fff",sheep:"#5d5a57",tiger:"#f2a03d",penguin:"#2f3038"}[r.animal];
+  return '<g class="legs"><rect x="-11" y="-16" width="8" height="16" rx="3" fill="#4a4038" stroke="'+OL+'" stroke-width="1.5"/><rect x="3" y="-16" width="8" height="16" rx="3" fill="#4a4038" stroke="'+OL+'" stroke-width="1.5"/></g>'+
+    '<rect x="-17" y="-46" width="34" height="34" rx="10" fill="'+r.shirt+'" stroke="'+OL+'" stroke-width="2"/>'+
+    '<path d="M-6,-46 L0,-38 L6,-46" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2"/>'+
+    '<g class="arms"><rect x="-24" y="-42" width="9" height="22" rx="4.5" fill="'+r.shirt+'" stroke="'+OL+'" stroke-width="2"/><rect x="15" y="-42" width="9" height="22" rx="4.5" fill="'+r.shirt+'" stroke="'+OL+'" stroke-width="2"/>'+
+    '<circle cx="-19.5" cy="-20" r="4.5" fill="'+skin+'" stroke="'+OL+'" stroke-width="1.5"/><circle cx="19.5" cy="-20" r="4.5" fill="'+skin+'" stroke="'+OL+'" stroke-width="1.5"/></g>';
+}
+function charSVG(id,sleep){ var a=ROSTER[id].animal; return bodySVG(id)+head(a)+eyes(a,sleep); }
+function avatar(id){ var a=ROSTER[id].animal; return '<span class="av"><svg viewBox="-30 -102 60 60">'+head(a)+eyes(a,false)+'</svg></span>'; }
+
+/* ---------- scene ---------- */
+var NS="http://www.w3.org/2000/svg";
+var DESKS=[[250,450],[470,450],[690,450],[200,610],[420,610],[640,610]];
+var SPOTS={
+  window:[[820,365],[890,370]], board:[[260,370],[330,372]], shelf:[[690,365]],
+  pantry:[[790,505],[880,505]], vending:[[900,555]], sofa:[[45,445],[85,450]], wander:[[560,380],[120,560],[860,640],[540,530]]
+};
+function staticScene(){
+  var u=S.upgrades||{};
+  var s='';
+  s+='<defs><pattern id="pl" width="120" height="60" patternUnits="userSpaceOnUse"><rect width="120" height="60" fill="#e8c493"/><path d="M0 59.5H120 M60 0V30 M0 30H120 M20 30V60 M100 30V60" stroke="#d2a874" stroke-width="1.5"/></pattern>'+
+     '<linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7cc0f2"/><stop offset="1" stop-color="#bfe2fb"/></linearGradient></defs>';
+  // walls & floor
+  s+='<rect x="100" y="0" width="900" height="335" fill="#f3ead8"/>';
+  s+='<polygon points="0,0 100,0 100,335 0,420" fill="#e6d9bf"/>';
+  s+='<polygon points="0,420 100,335 1000,335 1000,700 0,700" fill="url(#pl)"/>';
+  s+='<rect x="100" y="326" width="900" height="10" fill="#c99d6e"/><polygon points="0,410 100,326 100,336 0,420" fill="#b98c5d"/>';
+  s+='<line x1="100" y1="0" x2="100" y2="335" stroke="#d6c7a8" stroke-width="2"/>';
+  // left wall: door & frame
+  s+='<polygon points="18,150 72,128 72,345 18,385" fill="#a8774c" stroke="'+OL+'" stroke-width="2"/><circle cx="62" cy="250" r="4" fill="#e8c26a"/>';
+  s+='<polygon points="78,70 94,64 94,118 78,124" fill="#fff" stroke="'+OL+'" stroke-width="2"/>';
+  // whiteboard
+  s+='<g id="board"></g>';
+  // tv
+  s+='<rect x="445" y="78" width="210" height="130" rx="6" fill="#1f2330" stroke="'+OL+'" stroke-width="3"/>';
+  s+='<rect x="453" y="86" width="194" height="96" fill="#2b4f8a"/>';
+  s+='<rect x="453" y="86" width="194" height="96" fill="url(#sky)" opacity=".25"/>';
+  s+='<rect x="460" y="92" width="30" height="13" fill="#e23b32"/><text x="475" y="102.5" font-size="9" font-weight="800" fill="#fff" text-anchor="middle" font-family="sans-serif">LIVE</text>';
+  // anchor: original cat newscaster
+  s+='<g transform="translate(515,180) scale(.75)"><rect x="-26" y="-50" width="52" height="50" rx="12" fill="#2a2a3a"/><path d="M-6,-50 L0,-38 L6,-50" fill="#fff"/><path d="M0,-44 l-3,10 3,4 3,-4z" fill="#d23"/><path d="M-20,-92 L-16,-112 L-4,-98Z M20,-92 L16,-112 L4,-98Z" fill="#f5d6a8" stroke="'+OL+'" stroke-width="2"/><circle cx="0" cy="-78" r="24" fill="#f5d6a8" stroke="'+OL+'" stroke-width="2"/><circle cx="-8" cy="-80" r="3" fill="#222"/><circle cx="8" cy="-80" r="3" fill="#222"/><path d="M-4,-70 q4,4 8,0" stroke="#222" stroke-width="2" fill="none"/></g>';
+  s+='<rect x="560" y="100" width="80" height="48" rx="3" fill="#fff"/><text x="566" y="114" font-size="9" fill="#e23b32" font-weight="800" font-family="sans-serif">社畜新聞</text><text id="tvh" x="566" y="128" font-size="9" fill="#222" font-weight="700" font-family="sans-serif">本日戰況</text><text id="tvh2" x="566" y="141" font-size="8" fill="#555" font-family="sans-serif"></text>';
+  s+='<rect x="453" y="182" width="194" height="20" fill="#fff"/><rect x="453" y="182" width="34" height="20" fill="#c62828"/><text x="470" y="196" font-size="10" fill="#fff" font-weight="800" text-anchor="middle" font-family="sans-serif">快訊</text>';
+  s+='<clipPath id="tk"><rect x="489" y="182" width="158" height="20"/></clipPath><g clip-path="url(#tk)"><text id="ticker" x="650" y="196" font-size="10" fill="#222" font-weight="700" font-family="sans-serif"></text></g>';
+  // clock
+  s+='<circle cx="700" cy="108" r="24" fill="#fff" stroke="'+OL+'" stroke-width="3"/><g id="hands"><line id="hh" x1="700" y1="108" x2="700" y2="94" stroke="#222" stroke-width="3" stroke-linecap="round"/><line id="mh" x1="700" y1="108" x2="700" y2="89" stroke="#222" stroke-width="2" stroke-linecap="round"/></g>';
+  // bookshelf
+  s+='<rect x="665" y="150" width="62" height="182" fill="#a5714a" stroke="'+OL+'" stroke-width="2"/>';
+  var bc=["#d8584b","#4d8fd1","#f2b84b","#5fb08a","#8e6bc4","#e98aa8"];
+  for(var r=0;r<4;r++){ s+='<rect x="669" y="'+(154+r*44)+'" width="54" height="40" fill="#7d5233"/>'; for(var b=0;b<6;b++){ s+='<rect x="'+(671+b*8.6)+'" y="'+(160+r*44+(b%3))+'" width="7" height="'+(34-(b%3))+'" fill="'+bc[(b+r)%6]+'"/>'; } }
+  // window
+  s+='<rect x="765" y="48" width="200" height="150" fill="url(#sky)" stroke="'+OL+'" stroke-width="4"/>';
+  s+='<g fill="#9fb3c8" opacity=".8"><rect x="770" y="140" width="22" height="56"/><rect x="796" y="120" width="18" height="76"/><rect x="818" y="150" width="26" height="46"/><rect x="850" y="110" width="20" height="86"/><rect x="874" y="135" width="28" height="61"/><rect x="906" y="125" width="18" height="71"/><rect x="928" y="148" width="34" height="48"/></g>';
+  s+='<g fill="#fff"><ellipse cx="810" cy="80" rx="20" ry="9"/><ellipse cx="826" cy="74" rx="14" ry="10"/><ellipse cx="910" cy="96" rx="18" ry="8"/><ellipse cx="924" cy="90" rx="12" ry="9"/></g>';
+  s+='<line x1="865" y1="48" x2="865" y2="198" stroke="'+OL+'" stroke-width="4"/><rect x="758" y="196" width="214" height="8" fill="#eee" stroke="'+OL+'" stroke-width="2"/>';
+  // counter
+  s+='<rect x="745" y="238" width="225" height="94" fill="#c48a57" stroke="'+OL+'" stroke-width="2"/><rect x="740" y="230" width="235" height="10" fill="#9aa3ab" stroke="'+OL+'" stroke-width="2"/>';
+  s+='<rect x="755" y="250" width="66" height="30" rx="2" fill="#b47a48" stroke="'+OL+'" stroke-width="1.5"/><rect x="829" y="250" width="66" height="72" rx="2" fill="#b47a48" stroke="'+OL+'" stroke-width="1.5"/><rect x="903" y="250" width="60" height="72" rx="2" fill="#b47a48" stroke="'+OL+'" stroke-width="1.5"/>';
+  s+='<rect x="760" y="198" width="48" height="32" rx="3" fill="#ddd" stroke="'+OL+'" stroke-width="2"/><rect x="765" y="204" width="28" height="20" fill="#6b7a87"/>';
+  if(u.coffee){ s+='<g transform="translate(930,230)"><rect x="-16" y="-44" width="32" height="44" rx="4" fill="#3a3a3a" stroke="'+OL+'" stroke-width="2"/><rect x="-10" y="-38" width="20" height="10" fill="#89d3ff"/><rect x="-6" y="-14" width="12" height="12" fill="#fff" stroke="'+OL+'" stroke-width="1.5"/><path d="M-2,-18 q-3,-6 0,-10 M3,-18 q-3,-6 0,-10" stroke="#bbb" stroke-width="1.5" fill="none"/></g>'; }
+  // plant on left
+  if(u.plant){ s+=plant(135,332)+''; }
+  return s;
+}
+function plant(x,y){ return '<g transform="translate('+x+','+y+')"><path d="M0,-30 Q-18,-60 -8,-80 M0,-30 Q4,-70 14,-84 M0,-30 Q20,-50 26,-66 M0,-30 Q-26,-40 -30,-58" stroke="#3f8a4f" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M-14,-30 L14,-30 L10,0 L-10,0Z" fill="#c9774b" stroke="'+OL+'" stroke-width="2"/></g>'; }
+
+function deskEl(i){
+  var x=DESKS[i][0], y=DESKS[i][1];
+  var g=document.createElementNS(NS,"g");
+  g.innerHTML='<g transform="translate('+x+','+y+') scale(.8)">'+
+   '<rect x="-14" y="-62" width="28" height="30" rx="5" fill="#3c3c44" stroke="'+OL+'" stroke-width="2"/>'+
+   '<polygon points="-78,-36 78,-36 84,-6 -84,-6" fill="#c89462" stroke="'+OL+'" stroke-width="2" stroke-linejoin="round"/>'+
+   '<rect x="-84" y="-6" width="168" height="14" fill="#a8723f" stroke="'+OL+'" stroke-width="2"/>'+
+   '<rect x="-78" y="8" width="10" height="34" fill="#8a5a30" stroke="'+OL+'" stroke-width="1.5"/><rect x="68" y="8" width="10" height="34" fill="#8a5a30" stroke="'+OL+'" stroke-width="1.5"/>'+
+   '<rect x="20" y="-66" width="44" height="30" rx="3" fill="#2a2d33" stroke="'+OL+'" stroke-width="2"/><rect x="38" y="-38" width="8" height="6" fill="#2a2d33"/>'+
+   '<rect x="-40" y="-26" width="34" height="9" rx="2" fill="#2a2d33" transform="skewX(-10)"/>'+
+   '<rect x="-64" y="-30" width="12" height="12" rx="2" fill="#fff" stroke="'+OL+'" stroke-width="1.5"/>'+
+   '</g>';
+  g._y=y; return g;
+}
+function propEls(){
+  var u=S.upgrades||{}, arr=[];
+  function mk(y,html){ var g=document.createElementNS(NS,"g"); g.innerHTML=html; g._y=y; arr.push(g); }
+  // pantry table
+  mk(500,'<g transform="translate(835,500)"><rect x="-6" y="-10" width="12" height="40" fill="#8a5a30"/><ellipse cx="0" cy="-14" rx="48" ry="16" fill="#c89462" stroke="'+OL+'" stroke-width="2"/><rect x="-5" y="-30" width="10" height="14" fill="#5fb08a" stroke="'+OL+'" stroke-width="1.5"/></g>');
+  if(u.sofa) mk(470,'<g transform="translate(62,470)"><path d="M-55,-10 L-48,-62 L42,-70 L48,-18Z" fill="#e0754f" stroke="'+OL+'" stroke-width="2" stroke-linejoin="round"/><path d="M-60,-8 L52,-20 L56,8 L-58,22Z" fill="#ef8a63" stroke="'+OL+'" stroke-width="2" stroke-linejoin="round"/><rect x="-66" y="-30" width="16" height="52" rx="6" fill="#d9663f" stroke="'+OL+'" stroke-width="2"/></g>');
+  if(u.vending) mk(520,'<g transform="translate(955,520)"><rect x="-38" y="-200" width="76" height="200" rx="4" fill="#e55a4e" stroke="'+OL+'" stroke-width="2"/><rect x="-30" y="-188" width="44" height="120" fill="#fbe3c9" stroke="'+OL+'" stroke-width="1.5"/>'+
+    [0,1,2,3].map(function(r){return [0,1,2].map(function(c){return '<rect x="'+(-26+c*14)+'" y="'+(-182+r*29)+'" width="9" height="20" rx="2" fill="'+["#4d8fd1","#5fb08a","#f2b84b"][(r+c)%3]+'"/>';}).join('');}).join('')+
+    '<circle cx="24" cy="-150" r="3" fill="#7ee08a"/><circle cx="24" cy="-138" r="3" fill="#7ee08a"/><rect x="-26" y="-50" width="40" height="16" rx="2" fill="#5a2a25"/></g>');
+  if(u.plant) mk(680,plant(960,680));
+  return arr;
+}
+
+var svg, actorLayer, actors={}, deskNodes=[], propNodes=[], bubbles={};
+function buildScene(){
+  var cam=document.getElementById("cam");
+  svg=cam.querySelector("svg");
+  svg.innerHTML=staticScene()+'<g id="actors"></g>';
+  actorLayer=svg.querySelector("#actors");
+  deskNodes=[]; for(var i=0;i<DESKS.length;i++) deskNodes.push(deskEl(i));
+  propNodes=propEls();
+  // actors
+  var hud=document.getElementById("bubs");
+  S.staff.forEach(function(s){
+    if(!actors[s.id]){
+      var d=DESKS[s.desk]; var a={id:s.id,x:d[0]+(Math.random()*200-100),y:d[1]-20+Math.random()*30,tx:null,ty:null,mode:"idle",face:1,next:0,cheer:0,sleepDrawn:null};
+      a.x=Math.max(80,Math.min(920,a.x)); actors[s.id]=a;
+    }
+    var a=actors[s.id];
+    a.g=document.createElementNS(NS,"g"); a.g.style.cursor="pointer";
+    a.inner=document.createElementNS(NS,"g"); a.g.appendChild(a.inner);
+    a.z=document.createElementNS(NS,"text"); a.z.setAttribute("font-size","16"); a.z.setAttribute("font-weight","800"); a.z.setAttribute("fill","#6a7fa8"); a.z.setAttribute("x","16"); a.z.setAttribute("y","-92"); a.g.appendChild(a.z);
+    a.g.addEventListener("click",function(){ say(s.id,line(s.id)); });
+    a.sleepDrawn=null;
+    if(!bubbles[s.id]){ var b=document.createElement("div"); b.className="bub"; hud.appendChild(b); bubbles[s.id]={el:b,until:0}; }
+  });
+}
+
+/* ---------- behaviour ---------- */
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function spotFor(s){
+  var u=S.upgrades||{}, keys=["window","board","shelf","pantry","wander","wander"];
+  if(u.vending) keys.push("vending","vending");
+  if(u.sofa) keys.push("sofa");
+  return pick(SPOTS[pick(keys)]);
+}
+function desired(s){
+  var f=eff(s), a=actors[s.id], d=DESKS[s.desk];
+  if(a.cheer>performance.now()) return {mode:"cheer"};
+  if(f.energy<20){ if(S.upgrades.sofa) return {mode:"sleep",x:SPOTS.sofa[s.desk%2][0],y:SPOTS.sofa[s.desk%2][1]}; return {mode:"sleep",x:d[0]-20,y:d[1]-18}; }
+  if(doingOf(s.id).length) return {mode:"work",x:d[0]-20,y:d[1]-18};
+  return {mode:"idle"};
+}
+function think(t){
+  S.staff.forEach(function(s){
+    var a=actors[s.id]; if(!a) return;
+    var want=desired(s);
+    if(want.mode==="cheer"){ a.mode="cheer"; return; }
+    if(want.mode==="idle"){
+      if(a.mode!=="idle"||t>a.next){ var p=spotFor(s); a.tx=p[0]+(Math.random()*30-15); a.ty=p[1]+(Math.random()*16-8); a.next=t+7000+Math.random()*9000; }
+      a.mode="idle";
+    } else { a.mode=want.mode; a.tx=want.x; a.ty=want.y; }
+  });
+}
+var LINES={
+  work:["「{t}」快好了啦，大概","這個「{t}」誰訂的期限？","先做再說，Ctrl+S 按到手酸","交了，開會時再被改一次。","我正在跟「{t}」培養感情","進度 87%，跟昨天一樣","別吵，我在心流"],
+  busy:["一次塞我 {n} 件，你認真？","我只有一雙手（爪）","老闆，排程是什麼？可以吃嗎"],
+  idle:["老闆今天沒派工？","咖啡比工作好喝","我在思考公司的未來（摸魚）","有人要訂飲料嗎","看板空空的，好不安","帶薪發呆中"],
+  sleep:["Zzz…","再五分鐘…","體力歸零，請勿打擾"],
+  cheer:["交了！🎉","搞定收工！","老闆快發獎金","又是完美的一天"],
+  sad:["心情好差，想放假","這間公司還有救嗎","今天不想說話"]
+};
+function line(id){
+  var s=staffById(id), a=actors[id], f=eff(s), d=doingOf(id), pool;
+  if(a.mode==="sleep") pool=LINES.sleep;
+  else if(a.mode==="cheer") pool=LINES.cheer;
+  else if(f.mood<30) pool=LINES.sad;
+  else if(d.length>=3) pool=LINES.busy;
+  else if(a.mode==="work") pool=LINES.work;
+  else pool=LINES.idle;
+  var t=d.length?pick(d).title:"";
+  return pick(pool).replace("{t}",t.length>10?t.slice(0,10)+"…":t).replace("{n}",d.length);
+}
+function say(id,text,ms){
+  var b=bubbles[id]; if(!b) return;
+  b.el.innerHTML="<b>"+esc(ROSTER[id].role)+"</b><br>"+esc(text);
+  b.until=performance.now()+(ms||4200); b.el.classList.add("on");
+}
+var nextChat=0, aiQueue=[];
+function chatter(t){
+  if(t<nextChat) return;
+  if(aiQueue.length){ var q=aiQueue.shift(); say(q.id,q.line,4500); nextChat=t+3600; return; }
+  var free=S.staff.filter(function(s){return bubbles[s.id]&&bubbles[s.id].until<t;});
+  var on=S.staff.filter(function(s){return bubbles[s.id]&&bubbles[s.id].until>=t;});
+  if(free.length&&on.length<2){ var s=pick(free); say(s.id,line(s.id)); }
+  nextChat=t+3500+Math.random()*4000;
+}
+
+/* ---------- loop ---------- */
+var last=0, lastThink=0, tickX=650;
+function frame(t){
+  var dt=Math.min(0.05,(t-last)/1000||0); last=t;
+  if(t-lastThink>800){ think(t); chatter(t); lastThink=t; }
+  var list=[];
+  S.staff.forEach(function(s){
+    var a=actors[s.id]; if(!a||!a.g) return;
+    var moving=false;
+    if(a.tx!=null&&a.mode!=="cheer"){ var dx=a.tx-a.x, dy=a.ty-a.y, dist=Math.hypot(dx,dy);
+      if(dist>2){ var sp=110*dt; a.x+=dx/dist*Math.min(sp,dist); a.y+=dy/dist*Math.min(sp,dist); moving=true; if(Math.abs(dx)>1) a.face=dx>0?1:-1; } }
+    var sleeping=a.mode==="sleep"&&!moving;
+    if(a.sleepDrawn!==sleeping){ a.inner.innerHTML=charSVG(s.id,sleeping); a.sleepDrawn=sleeping; }
+    var oy=0;
+    if(moving) oy=-Math.abs(Math.sin(t/90))*4;
+    else if(a.mode==="cheer") oy=-Math.abs(Math.sin(t/140))*20;
+    else if(a.mode==="work") oy=Math.sin(t/120)*1.2;
+    else if(sleeping) oy=Math.sin(t/700)*1.5;
+    var sc=0.95+(a.y-330)/370*0.3;
+    a.g.setAttribute("transform","translate("+a.x.toFixed(1)+","+(a.y+oy).toFixed(1)+") scale("+(sc*a.face).toFixed(3)+","+sc.toFixed(3)+")");
+    a.z.textContent=sleeping?("Z".repeat(1+Math.floor(t/600)%3)):"";
+    a.z.setAttribute("transform","scale("+a.face+",1)");
+    a.g._y=a.y; list.push(a.g);
+    var b=bubbles[s.id]; if(b){ if(b.until<t) b.el.classList.remove("on"); b.el.style.left=(a.x/10)+"%"; b.el.style.top=((a.y-100*sc-6)/7)+"%"; }
+  });
+  list=list.concat(deskNodes,propNodes).sort(function(p,q){return p._y-q._y;});
+  for(var i=0;i<list.length;i++) actorLayer.appendChild(list[i]);
+  // ticker
+  var tk=document.getElementById("ticker"); if(tk){ tickX-=40*dt; var w=tk.getComputedTextLength?tk.getComputedTextLength():600; if(tickX< 489-w) tickX=650; tk.setAttribute("x",tickX.toFixed(1)); }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- clock ---------- */
+function tpe(d){ return new Date(d.getTime()+(d.getTimezoneOffset()+480)*60000); }
+function pad(n){return (n<10?"0":"")+n;}
+function clock(){
+  var d=tpe(new Date());
+  var el=document.getElementById("clk"); if(el) el.textContent=pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+  var h=d.getHours()%12+d.getMinutes()/60, m=d.getMinutes();
+  var hh=document.getElementById("hh"), mh=document.getElementById("mh");
+  if(hh){ hh.setAttribute("transform","rotate("+(h*30)+" 700 108)"); mh.setAttribute("transform","rotate("+(m*6)+" 700 108)"); }
+}
+
+/* ---------- UI ---------- */
+var tab="todo", newCat=null, openPick=null;
+function esc(x){ return String(x).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+var toastT;
+function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove("on");},1800); }
+function level(){ return 1+Math.floor(S.totalDone/5); }
+var TITLES=["車庫工作室","小小新創","有模有樣公司","業界小有名氣","社畜帝國"];
+
+function renderBoard(){
+  var g=svg.querySelector("#board"); if(!g) return;
+  var cols=[["To-do","todo","#f6d66b"],["Doing","doing","#f1f1f1"],["Done","done","#a8dba0"]];
+  var s='<rect x="140" y="64" width="290" height="190" rx="4" fill="#fff" stroke="#8a8a8a" stroke-width="5"/><rect x="200" y="254" width="170" height="8" rx="2" fill="#bbb" stroke="'+OL+'" stroke-width="1.5"/>';
+  s+='<text x="152" y="84" font-size="13" font-weight="800" fill="#333" font-family="sans-serif">社畜任務看板</text>';
+  cols.forEach(function(c,i){
+    var x=150+i*94;
+    s+='<text x="'+x+'" y="102" font-size="10" font-weight="800" fill="'+(i===0?"#3a7bd5":i===1?"#888":"#3a9a4a")+'" font-family="sans-serif">'+c[0]+'</text>';
+    if(i) s+='<line x1="'+(x-5)+'" y1="92" x2="'+(x-5)+'" y2="246" stroke="#ddd" stroke-width="1.5"/>';
+    var ts=S.tasks.filter(function(t){return t.status===c[1];}); if(c[1]==="done") ts=ts.slice(-4).reverse();
+    ts.slice(0,4).forEach(function(t,j){
+      var y=110+j*34;
+      s+='<rect x="'+(x+(j%2?4:0))+'" y="'+y+'" width="80" height="26" fill="'+c[2]+'" stroke="#b9a970" stroke-width="1" transform="rotate('+((j%2?1:-1)*1.5)+' '+(x+40)+' '+(y+13)+')"/>';
+      var tt=t.title.length>7?t.title.slice(0,7)+"…":t.title;
+      s+='<text x="'+(x+6+(j%2?4:0))+'" y="'+(y+17)+'" font-size="9.5" font-weight="700" fill="#4a3e2a" font-family="sans-serif">'+esc(tt)+'</text>';
+    });
+    if(ts.length>4) s+='<text x="'+x+'" y="250" font-size="8" fill="#999" font-family="sans-serif">+'+(ts.length-4)+' 項</text>';
+  });
+  g.innerHTML=s;
+}
+function renderTV(){
+  var done=S.tasks.filter(function(t){return t.status==="done";}).length;
+  var doing=S.tasks.filter(function(t){return t.status==="doing";}).length;
+  var h=svg.querySelector("#tvh"), h2=svg.querySelector("#tvh2"), tk=svg.querySelector("#ticker");
+  if(h) h.textContent="進行中 "+doing+" 件";
+  if(h2) h2.textContent="累計完成 "+S.totalDone+" 件";
+  if(tk) tk.textContent=(S.news||[]).slice(-5).reverse().join("　●　");
+}
+function renderUI(){
+  var u=S.upgrades||{};
+  var lv=level();
+  var H='';
+  H+='<div class="bar"><span class="pill gold">💰 $'+S.coins+'</span><span class="pill">✅ '+S.totalDone+' 件</span><span class="pill">🏢 Lv.'+lv+' '+TITLES[Math.min(TITLES.length-1,lv-1)]+'</span>'+
+     '<span style="flex:1"></span><button class="btn ai" id="aiBtn">🎤 開晨會</button></div>';
+  // add task
+  H+='<div class="panel"><h3>📝 新增待辦<span style="font-size:12px;color:#8a7f73;font-weight:600">你真實要做的事</span></h3>';
+  H+='<form class="add" id="addF"><input id="addI" maxlength="60" placeholder="例：剪本週口播影片" autocomplete="off"><button class="btn dark" type="submit">新增</button></form>';
+  H+='<div class="chips"><span class="chip'+(newCat===null?' on':'')+'" data-cat="">🤖 自動分類</span>'+Object.keys(CATS).map(function(k){return '<span class="chip'+(newCat===k?' on':'')+'" data-cat="'+k+'">'+CATS[k].e+' '+CATS[k].n+'</span>';}).join('')+'</div></div>';
+  // kanban
+  var cnt=function(st){return S.tasks.filter(function(t){return t.status===st;}).length;};
+  H+='<div class="panel"><h3>📌 任務看板</h3><div class="tabs">'+
+     [["todo","待辦"],["doing","進行中"],["done","完成"]].map(function(x){return '<button data-tab="'+x[0]+'" class="'+(tab===x[0]?'on':'')+'">'+x[1]+' '+cnt(x[0])+'</button>';}).join('')+'</div>';
+  var list=S.tasks.filter(function(t){return t.status===tab;});
+  if(tab==="done") list=list.slice().reverse();
+  if(!list.length) H+='<div class="empty">'+(tab==="todo"?"沒有待辦，老闆可以下班了 🎉":tab==="doing"?"沒人在工作…先去「待辦」指派任務":"還沒有完成的任務")+'</div>';
+  list.forEach(function(t){
+    var c=CATS[t.cat]||CATS.misc, s=t.assignee?staffById(t.assignee):null;
+    H+='<div class="task" style="border-left-color:'+c.c+'"><div class="t">'+esc(t.title)+'</div><div class="m"><span>'+c.e+' '+c.n+'</span>';
+    if(t.assignee&&ROSTER[t.assignee]) H+='<span style="display:flex;align-items:center;gap:4px">'+avatar(t.assignee)+ROSTER[t.assignee].name+'</span>';
+    if(t.status==="done") H+='<span>+$'+(t.r||0)+'</span>';
+    H+='</div><div class="a">';
+    if(t.status==="todo"){ H+='<button class="btn sm dark" data-act="pick" data-id="'+t.id+'">👉 指派</button><button class="btn sm" data-act="auto" data-id="'+t.id+'">🤖 交給最適合的</button><button class="btn sm" data-act="del" data-id="'+t.id+'">✕</button>'; }
+    else if(t.status==="doing"){ H+='<button class="btn sm dark" data-act="done" data-id="'+t.id+'">✓ 我做完了</button><button class="btn sm" data-act="back" data-id="'+t.id+'">退回待辦</button>'; }
+    else { H+='<button class="btn sm" data-act="del" data-id="'+t.id+'">刪除</button>'; }
+    H+='</div>';
+    if(openPick===t.id){
+      var best=bestFor(t.cat);
+      H+='<div class="pick">'+S.staff.map(function(st){var f=eff(st); var r=ROSTER[st.id]; return '<button data-act="assign" data-id="'+t.id+'" data-s="'+st.id+'" class="'+(best&&best.id===st.id?'best':'')+'">'+avatar(st.id)+r.name+(r.skills.indexOf(t.cat)>=0?' ⭐':'')+(f.energy<20?' 😴':'')+'</button>';}).join('')+'</div>';
+    }
+    H+='</div>';
+  });
+  H+='</div>';
+  // staff
+  H+='<div class="panel"><h3>🐾 員工狀態</h3><div class="staff">'+S.staff.map(function(st){
+    var f=eff(st), r=ROSTER[st.id], d=doingOf(st.id).length;
+    return '<div class="card">'+avatar(st.id)+'<div style="flex:1;min-width:0"><div class="n">'+r.name+' <span class="r">'+r.role+'</span></div><div class="r">擅長 '+r.skills.map(function(k){return CATS[k].e;}).join('')+'・手上 '+d+' 件</div>'+
+      '<div class="meter" title="體力"><i style="width:'+f.energy.toFixed(0)+'%;background:#ef6b5b"></i></div><div class="meter" title="心情"><i style="width:'+f.mood.toFixed(0)+'%;background:#f2b84b"></i></div></div></div>';
+  }).join('')+'</div><div class="note">紅條＝體力（完成任務會消耗，隨時間恢復），黃條＝心情（工作量太多會下降）。派給擅長的員工 ⭐ 賺比較多。</div></div>';
+  // shop
+  H+='<div class="panel"><h3>🛒 辦公室升級</h3><div class="shop">'+SHOP.map(function(it){
+    var own=!!u[it.id];
+    return '<div class="item"><div class="n">'+it.n+'</div><p>'+it.d+'</p>'+(own?'<button class="btn sm" disabled>已擁有</button>':'<button class="btn sm dark" data-act="buy" data-id="'+it.id+'"'+(S.coins<it.p?' disabled':'')+'>$'+it.p+'</button>')+'</div>';
+  }).join('')+'</div></div>';
+  H+='<div class="note" id="modeNote">'+(mode==="artifact"?"資料會存在這個頁面裡，換裝置打開也看得到。":"資料存在這台裝置的瀏覽器裡（換裝置或清除瀏覽器資料就會不見）。")+'</div>';
+  document.getElementById("ui").innerHTML=H;
+  var b=document.getElementById("aiBtn"); if(b&&!sampler) b.style.display=samplerChecked?"none":"";
+}
+function render(){ renderBoard(); renderTV(); renderUI(); var lu=document.getElementById("lu"); if(lu){ var d=tpe(new Date(S.savedAt||now())); lu.textContent=pad(d.getHours())+":"+pad(d.getMinutes()); } }
+
+function addNews(m){ S.news=(S.news||[]); S.news.push(m); if(S.news.length>8) S.news=S.news.slice(-8); }
+function assign(tid,sid){
+  var t=S.tasks.filter(function(x){return x.id===tid;})[0]; if(!t) return;
+  var st=staffById(sid), r=ROSTER[sid], n=doingOf(sid).length;
+  mutate(function(){
+    t.assignee=sid; t.status="doing"; openPick=null;
+    if(n>=2){ st.mood=Math.max(0,st.mood-10); }
+  });
+  var f=eff(st);
+  if(f.energy<20) say(sid,"我都睡著了你還派…好啦醒來做");
+  else if(n>=2) say(sid,"一次塞我 "+(n+1)+" 件，你認真？");
+  else if(r.skills.indexOf(t.cat)>=0) say(sid,"「"+(t.title.length>10?t.title.slice(0,10)+"…":t.title)+"」交給我！");
+  else say(sid,"這不是我專長欸…但好吧");
+}
+function complete(tid){
+  var t=S.tasks.filter(function(x){return x.id===tid;})[0]; if(!t) return;
+  var sid=t.assignee, st=staffById(sid), r=ROSTER[sid], f=eff(st);
+  var match=r.skills.indexOf(t.cat)>=0;
+  var reward=100+(match?50:0); if(f.mood<30) reward=Math.round(reward*0.7);
+  mutate(function(){
+    t.status="done"; t.d=now(); t.r=reward;
+    S.coins+=reward; S.totalDone+=1;
+    st.energy=Math.max(0,st.energy-(match?6:12)); st.mood=Math.min(100,st.mood+8);
+    addNews("【快訊】"+r.name+"完成「"+t.title+"」，公司進帳 $"+reward);
+    var done=S.tasks.filter(function(x){return x.status==="done";});
+    if(done.length>30){ var drop=done[0].id; S.tasks=S.tasks.filter(function(x){return x.id!==drop;}); }
+  });
+  actors[sid].cheer=performance.now()+2500;
+  say(sid,pick(LINES.cheer)+"  +$"+reward);
+  toast("🎉 +$"+reward+(match?"（專長加成）":""));
+}
+function buy(id){
+  var it=SHOP.filter(function(x){return x.id===id;})[0]; if(!it||S.coins<it.p) return;
+  mutate(function(){
+    S.coins-=it.p; S.upgrades[id]=true;
+    if(id==="hire") S.staff.push({id:"penguin",desk:5,energy:100,mood:90,at:now()});
+    addNews("【公司動態】老闆買了"+it.n.replace(/^\S+\s/,"")+"，員工士氣大振");
+  });
+  buildScene(); render();
+  toast("已購買 "+it.n);
+  if(id==="hire") setTimeout(function(){ say("penguin","大家好！我是新來的實習生企企！"); },400);
+}
+
+function bindUI(){
+  var ui=document.getElementById("ui");
+  ui.addEventListener("submit",function(e){
+    e.preventDefault();
+    var i=document.getElementById("addI"), v=i.value.trim(); if(!v) return;
+    var cat=newCat||guessCat(v);
+    mutate(function(){ S.tasks.push({id:uid(),title:v,cat:cat,status:"todo",assignee:null,c:now()}); tab="todo"; });
+    toast("已加入待辦（"+CATS[cat].e+CATS[cat].n+"）");
+    var ni=document.getElementById("addI"); if(ni) ni.focus();
+  });
+  ui.addEventListener("click",function(e){
+    var el=e.target.closest("[data-cat],[data-tab],[data-act],#aiBtn"); if(!el) return;
+    if(el.id==="aiBtn"){ meeting(); return; }
+    if(el.hasAttribute("data-cat")){ newCat=el.getAttribute("data-cat")||null; renderUI(); return; }
+    if(el.hasAttribute("data-tab")){ tab=el.getAttribute("data-tab"); openPick=null; renderUI(); return; }
+    var act=el.getAttribute("data-act"), id=el.getAttribute("data-id");
+    if(act==="pick"){ openPick=openPick===id?null:id; renderUI(); }
+    else if(act==="assign") assign(id,el.getAttribute("data-s"));
+    else if(act==="auto"){ var t=S.tasks.filter(function(x){return x.id===id;})[0]; var b=bestFor(t.cat); if(b) assign(id,b.id); }
+    else if(act==="done") complete(id);
+    else if(act==="back") mutate(function(){ var t=S.tasks.filter(function(x){return x.id===id;})[0]; t.status="todo"; t.assignee=null; });
+    else if(act==="del") mutate(function(){ S.tasks=S.tasks.filter(function(x){return x.id!==id;}); });
+    else if(act==="buy") buy(id);
+  });
+}
+
+/* ---------- AI meeting ---------- */
+var sampler=null, samplerChecked=false, meetingBusy=false;
+function meeting(){
+  if(!sampler){ toast("這個檢視無法使用 AI 晨會"); return; }
+  if(meetingBusy) return; meetingBusy=true;
+  var b=document.getElementById("aiBtn"); if(b){ b.disabled=true; b.textContent="🎤 開會中…"; }
+  var lines=S.staff.map(function(s){var r=ROSTER[s.id], f=eff(s), d=doingOf(s.id).map(function(t){return t.title;}); return "- id="+s.id+"｜"+r.name+"（"+r.animal+"，"+r.role+"）｜體力"+Math.round(f.energy)+" 心情"+Math.round(f.mood)+"｜手上任務："+(d.length?d.join("、"):"無");}).join("\n");
+  var todo=S.tasks.filter(function(t){return t.status==="todo";}).map(function(t){return t.title;}).join("、")||"無";
+  var prompt="你是一部辦公室情境喜劇的編劇。這間公司的員工都是動物，老闆是使用者本人，任務是老闆真實生活中的待辦。\n"+
+    "請替每位員工寫一句晨會台詞：繁體中文、台灣職場口語、幽默帶點厭世吐槽但不刻薄，每句不超過22個字，盡量提到他手上的任務；沒任務的人可以搶工作、摸魚或吐槽待辦清單。體力低的人要很睏，心情低的人要很喪。\n"+
+    "另外寫一則電視快訊標題（不超過24字），總結今天公司狀況。\n"+
+    "員工：\n"+lines+"\n尚未指派的待辦："+todo+"\n\n"+
+    '只回傳 JSON：{"lines":[{"id":"員工id","line":"台詞"}],"news":"快訊"}';
+  sampler.json(prompt,{modelTier:"quick"}).then(function(res){
+    var arr=(res&&res.lines)||[];
+    arr.forEach(function(x){ if(x&&ROSTER[x.id]&&staffById(x.id)&&x.line) aiQueue.push({id:x.id,line:String(x.line).slice(0,40)}); });
+    nextChat=0;
+    if(res&&res.news){ addNews("【晨會】"+String(res.news).slice(0,40)); renderTV(); save(); }
+    toast("晨會開始！看看大家說什麼");
+  }).catch(function(err){
+    if(err&&err.code==="not_granted"){ sampler=null; toast("沒有權限使用 AI"); }
+    else if(err&&err.code==="rate_limited") toast("太頻繁了，等一下再開會");
+    else toast("晨會失敗了，等等再試");
+  }).then(function(){ meetingBusy=false; var b=document.getElementById("aiBtn"); if(b){ b.disabled=false; b.textContent="🎤 開晨會"; } });
+}
+
+/* ---------- boot ---------- */
+var st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
+var root=document.createElement("div"); root.className="wrap";
+root.innerHTML='<div class="cam" id="cam"><svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg"></svg>'+
+  '<div class="hud"><div class="scan"></div>'+
+  '<div class="corner" style="left:1.2%;top:1.6%;border-right:0;border-bottom:0"></div><div class="corner" style="right:1.2%;top:1.6%;border-left:0;border-bottom:0"></div><div class="corner" style="left:1.2%;bottom:1.6%;border-right:0;border-top:0"></div><div class="corner" style="right:1.2%;bottom:1.6%;border-left:0;border-top:0"></div>'+
+  '<span class="tag" style="left:2.5%;top:3%">CAM 01</span><span class="tag rec" style="left:12.5%;top:3%"><i></i>REC</span>'+
+  '<span class="tag live" style="left:2.5%;top:9.5%"><span style="color:#ff3b30">●</span> LIVE・最後更新 <span id="lu">--:--</span>（台北時間）</span>'+
+  '<span class="tag clock" style="right:2.5%;top:3%" id="clk">--:--:--</span>'+
+  '<div id="bubs"></div></div></div><div id="ui"></div><div class="toast" id="toast"></div>';
+document.body.insertBefore(root,document.body.firstChild);
+
+// prefer newer local copy only in local mode (decided once capability resolves)
+buildScene(); render(); bindUI(); clock(); setInterval(clock,1000);
+setInterval(function(){ renderUI(); },60000);
+requestAnimationFrame(frame);
+
+function useCap(name){ try{ return (window.claude&&window.claude.use)?window.claude.use(name):Promise.resolve(null); }catch(e){ return Promise.resolve(null); } }
+useCap("artifact").then(function(a){
+  art=a||null; mode=art?"artifact":"local";
+  if(!art){ try{ var L=JSON.parse(localStorage.getItem("office-boss-v1")||"null"); if(L&&L.staff&&(SEEDED||(L.savedAt||0)>(S.savedAt||0))){ S=L; actors={}; bubbles={}; document.getElementById("bubs").innerHTML=""; buildScene(); } }catch(e){} }
+  render();
+}).catch(function(){});
+useCap("sample").then(function(s){ sampler=s||null; samplerChecked=true; renderUI(); }).catch(function(){ samplerChecked=true; renderUI(); });
+})();
+</script>
+</body>
+</html>
